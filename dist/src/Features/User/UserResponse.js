@@ -20,6 +20,7 @@ __decorate([
 ], User.prototype, "Id", void 0);
 __decorate([
     class_validator_1.IsInt(),
+    class_transformer_1.Exclude(),
     __metadata("design:type", Number)
 ], User.prototype, "Pincode", void 0);
 __decorate([

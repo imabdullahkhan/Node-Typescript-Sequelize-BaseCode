@@ -44,7 +44,11 @@ const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const ErrorHandler_1 = require("./Middlewares/ErrorHandler");
 const UserController_1 = __importDefault(require("./Features/User/UserController"));
 const DocumentController_1 = require("./Swagger-rc/DocumentController");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const exception_1 = require("./exception");
 require("./Database-loader/sequelize");
+const UserRepository_1 = __importDefault(require("./Features/User/UserRepository"));
+const enums_1 = require("./Constrants/enums");
 const app = express_1.default();
 app.use(express_1.default.json());
 app.use(express_1.default.static(path_1.join(__dirname, "public")));
@@ -66,37 +70,39 @@ routing_controllers_1.useExpressServer(app, {
     defaultErrorHandler: false,
     classTransformer: true,
     authorizationChecker: (action, roles) => __awaiter(void 0, void 0, void 0, function* () {
-        // const bearer = action.request.headers[process.env.AUTHORIZATION_HEADER_KEY];
-        // if (bearer) {
-        //     const token = bearer.split(" ")[1];
-        //     return jwt.verify(token, process.env.SECRET_KEY, async (err: any, decoded: any) => {
-        //         if (err) {
-        //             throw new UnAuthorizedException();
-        //         }
-        //         try{
-        //             let user = await UserModel.findById(decoded._id)
-        //                 .lean()
-        //                 .exec();
-        //         if (user) {
-        //             user = ConvertBsonIdsToString(user);
-        //             action.request.User = user;
-        //         }
-        //         if (user && !roles.length) {
-        //             return true;
-        //         }
-        //         if (roles[0] === "admin" && user.admin) {
-        //             return true;
-        //         }
-        //         throw new UnAuthorizedException();
-        //     } catch(e) { 
-        //         console.log(e);
-        //         throw e;
-        //     }
-        //     });
-        // } else {
-        //     throw new UnAuthorizedException();
-        // }
-        return true;
+        const bearer = action.request.headers[process.env.AUTHORIZATION_HEADER_KEY];
+        if (bearer) {
+            let userRepository = typedi_1.Container.get(UserRepository_1.default);
+            const token = bearer.split(" ")[1];
+            return jsonwebtoken_1.default.verify(token, process.env.SECRET_KEY, (err, decoded) => __awaiter(void 0, void 0, void 0, function* () {
+                if (err) {
+                    throw new exception_1.UnAuthorizedException();
+                }
+                try {
+                    let user = yield userRepository.findById(decoded.Id);
+                    if (user) {
+                        action.request.User = user;
+                    }
+                    if (user && !roles.length) {
+                        return true;
+                    }
+                    if (roles[0] === "parent" && user.UserType === enums_1.UserType.Parent) {
+                        return true;
+                    }
+                    if (roles.length > 1 && roles[1] === "children" && enums_1.UserType.Child === user.UserType) {
+                        return true;
+                    }
+                    throw new exception_1.UnAuthorizedException();
+                }
+                catch (e) {
+                    console.log(e);
+                    throw e;
+                }
+            }));
+        }
+        else {
+            throw new exception_1.UnAuthorizedException();
+        }
     }),
     currentUserChecker: (action) => __awaiter(void 0, void 0, void 0, function* () {
         if (action.request.User) {

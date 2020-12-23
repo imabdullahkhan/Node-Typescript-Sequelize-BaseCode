@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_typescript_1 = require("sequelize-typescript");
 const userModel_1 = __importDefault(require("../features/user/userModel"));
-const sequelize = new sequelize_typescript_1.Sequelize('sequelize', 'root', '', {
+const sequelize = new sequelize_typescript_1.Sequelize('basecode', 'root', '', {
     repositoryMode: true,
     host: 'localhost',
     dialect: 'mysql',

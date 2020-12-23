@@ -31,9 +31,30 @@ const UserRequest_1 = require("./UserRequest");
 const common_1 = require("../../Response/common");
 const UserResponse_1 = require("./UserResponse");
 const UserMessage_1 = require("./UserMessage");
+const common_2 = require("../../Requests/common");
 let UserController = class UserController {
     constructor(_userService) {
         this._userService = _userService;
+    }
+    Verify(data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new common_1.DataResponse(yield this._userService.Verify(data), UserMessage_1.Messages.SucessfullyUserVerified);
+        });
+    }
+    GetAllUsers(paginationParams) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new common_1.DataResponse(yield this._userService.GetAllUsers(paginationParams), UserMessage_1.Messages.SucessfullyFetchedAllUsers);
+        });
+    }
+    ResendCode(data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new common_1.MessageResponse(yield this._userService.ResendVerifyCode(data));
+        });
+    }
+    Me(user) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new common_1.DataResponse(yield this._userService.me(user), " User Data Found");
+        });
     }
     Register(user) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45,9 +66,9 @@ let UserController = class UserController {
             return new common_1.DataResponse(yield this._userService.Login(user), UserMessage_1.Messages.SucessfullyLogin);
         });
     }
-    Verify(data) {
+    ForgotPassword(user) {
         return __awaiter(this, void 0, void 0, function* () {
-            return new common_1.DataResponse(yield this._userService.Verify(data), UserMessage_1.Messages.SucessfullyUserVerified);
+            return new common_1.MessageResponse(yield this._userService.ForgotPassword(user));
         });
     }
     DeleteById(data) {
@@ -55,12 +76,61 @@ let UserController = class UserController {
             return new common_1.MessageResponse(yield this._userService.DeleteOne(data));
         });
     }
-    GetAllUsers() {
+    UpdateUser(data, user) {
         return __awaiter(this, void 0, void 0, function* () {
-            return new common_1.DataResponse(yield this._userService.GetAllUsers(), UserMessage_1.Messages.SucessfullyFetchedAllUsers);
+            return new common_1.MessageResponse(yield this._userService.UpdateUser(data, user.Id));
         });
     }
 };
+__decorate([
+    decorators_1.Get("/verify", {
+        successResponseOptions: {
+            model: UserResponse_1.GetUserLoginResponse,
+            description: UserMessage_1.Messages.SucessfullyUserVerified
+        }
+    }),
+    __param(0, decorators_1.QueryParams()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [UserRequest_1.UserVerifyRequest]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "Verify", null);
+__decorate([
+    decorators_1.Get("/", {
+        successResponseOptions: {
+            model: UserResponse_1.GetAllUsersResponse,
+            description: UserMessage_1.Messages.SucessfullyFetchedAllUsers
+        }
+    }),
+    __param(0, decorators_1.QueryParams()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [common_2.PaginationParams]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "GetAllUsers", null);
+__decorate([
+    decorators_1.Get("/resend/pin", {
+        successResponseOptions: {
+            model: common_1.MessageResponse,
+            description: "Resend Verification Code"
+        }
+    }),
+    __param(0, decorators_1.QueryParams()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [UserRequest_1.ResendVerifyCodeRequest]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "ResendCode", null);
+__decorate([
+    decorators_1.Authorized(),
+    decorators_1.Get("/active/me", {
+        successResponseOptions: {
+            model: UserResponse_1.User,
+            description: "Resend Verification Code"
+        }
+    }),
+    __param(0, routing_controllers_1.CurrentUser({ required: true })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "Me", null);
 __decorate([
     decorators_1.Post("/register", {
         successResponseOptions: {
@@ -86,17 +156,17 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "Login", null);
 __decorate([
-    decorators_1.Get("/verify", {
+    decorators_1.Post("/forgot", {
         successResponseOptions: {
-            model: UserResponse_1.GetUserLoginResponse,
-            description: UserMessage_1.Messages.SucessfullyUserVerified
+            model: common_1.MessageResponse,
+            description: "Forgot Password"
         }
     }),
-    __param(0, decorators_1.QueryParams()),
+    __param(0, routing_controllers_1.Body({ validate: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [UserRequest_1.UserVerifyRequest]),
+    __metadata("design:paramtypes", [UserRequest_1.ResendVerifyCodeRequest]),
     __metadata("design:returntype", Promise)
-], UserController.prototype, "Verify", null);
+], UserController.prototype, "ForgotPassword", null);
 __decorate([
     decorators_1.Delete("/delete", {
         successResponseOptions: {
@@ -110,16 +180,18 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "DeleteById", null);
 __decorate([
-    decorators_1.Get("/all", {
+    decorators_1.Authorized(),
+    decorators_1.Put("/update", {
         successResponseOptions: {
-            model: UserResponse_1.GetAllUsersResponse,
-            description: UserMessage_1.Messages.SucessfullyFetchedAllUsers
+            model: common_1.MessageResponse,
+            description: "Update User"
         }
     }),
+    __param(0, routing_controllers_1.Body({ validate: true })), __param(1, routing_controllers_1.CurrentUser({ required: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [UserRequest_1.UserUpdateRequest, Object]),
     __metadata("design:returntype", Promise)
-], UserController.prototype, "GetAllUsers", null);
+], UserController.prototype, "UpdateUser", null);
 UserController = __decorate([
     routing_controllers_1.JsonController("/user"),
     __metadata("design:paramtypes", [UserService_1.default])

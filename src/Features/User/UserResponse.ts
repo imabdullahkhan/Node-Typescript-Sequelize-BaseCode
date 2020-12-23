@@ -10,6 +10,7 @@ export class User implements UserInterface {
     @IsInt()
     Id: number;
     @IsInt()
+    @Exclude()
     Pincode : number;
     @IsInt()
     @Exclude()

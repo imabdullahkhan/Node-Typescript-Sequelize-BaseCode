@@ -38,9 +38,6 @@ export class ResendVerifyCodeRequest {
     @IsEmail()
     @IsOptional()
     email: string
-    @IsString()
-    @IsOptional()
-    phoneNumber: string
 }
 export class ChangePasswordRequest {
     @IsString()
@@ -53,12 +50,10 @@ export class ChangePasswordRequest {
 export class UserUpdateRequest {
     @IsOptional()
     @IsString()
-    name: string
+    Name: string
     @IsOptional()
-    @Transform(value => parseInt(value))
-    @IsInt()
-    @Min(1)
-    age: number;
+    @IsString()
+    ProfileImage: number;
 
 }
 

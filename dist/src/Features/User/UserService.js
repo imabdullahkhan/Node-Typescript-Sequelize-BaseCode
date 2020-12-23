@@ -31,6 +31,7 @@ const exception_1 = require("../../exception");
 const UserResponse_1 = require("./UserResponse");
 const class_transformer_1 = require("class-transformer");
 const UserMessage_1 = require("./UserMessage");
+const randomstring_1 = __importDefault(require("randomstring"));
 let UserService = class UserService {
     constructor(_userRepository) {
         this._userRepository = _userRepository;
@@ -52,14 +53,23 @@ let UserService = class UserService {
     }
     _generateToken(user) {
         return __awaiter(this, void 0, void 0, function* () {
-            return jsonwebtoken_1.default.sign({ _id: user.Id }, process.env.SECRET_KEY);
+            return jsonwebtoken_1.default.sign({ Id: user.Id }, process.env.SECRET_KEY);
         });
     }
-    GetAllUsers() {
+    GetAllUsers(data) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                let Users = yield this._userRepository.find({});
-                return Users;
+                let paginationParams = {};
+                if (!data.page && !data.limit) {
+                    data.page = 1;
+                    data.limit = 10;
+                }
+                if (data.limit !== -1) {
+                    paginationParams.limit = data.limit;
+                    paginationParams.page = ((data.page || 1) * data.limit) - data.limit;
+                }
+                let Users = yield this._userRepository.find({}, paginationParams);
+                return yield class_transformer_1.plainToClass(UserResponse_1.User, Users);
             }
             catch (e) {
                 throw new exception_1.BadRequestException(e);
@@ -89,6 +99,7 @@ let UserService = class UserService {
                     userModel.ExpiryPincode = yield this._getPinCodeExpiry();
                     userModel.Pincode = yield this._generatePinCode();
                     userModel.UserStatus = enums_1.UserStatus.Unverified;
+                    userModel.UserType = data.userType;
                     let userData = yield this._userRepository.save(userModel);
                     return { Id: userData.Id };
                 }
@@ -101,6 +112,7 @@ let UserService = class UserService {
     Login(data) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                console.log("reched");
                 let user = yield this._userRepository.findOne({ email: data.email });
                 if (!user) {
                     throw new exception_1.NotFoundException();
@@ -157,6 +169,73 @@ let UserService = class UserService {
             catch (e) {
                 throw new exception_1.BadRequestException(e);
             }
+        });
+    }
+    ResendVerifyCode(data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let user;
+            user = yield this._userRepository.findOne({ email: data.email });
+            if (!user) {
+                throw new exception_1.NotFoundException();
+            }
+            else if (user.UserStatus === enums_1.UserStatus.Active) {
+                throw new exception_1.CustomException(UserMessage_1.Messages.ExceptionAlreadyVerified, exception_1.ResponseCode.CONFLICT, exception_1.ResponseOrigin.INTERNALSERVER);
+            }
+            else {
+                try {
+                    const updatedUser = yield this._userRepository.findByIdAndUpdate(user.Id, {
+                        Pincode: yield this._generatePinCode(),
+                        ExpiryPincode: yield this._getPinCodeExpiry(),
+                        UserStatus: enums_1.UserStatus.Unverified
+                    });
+                    return { Id: user.Id };
+                }
+                catch (e) {
+                    throw new exception_1.BadRequestException(e);
+                }
+            }
+        });
+    }
+    ForgotPassword(data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let user = yield this._userRepository.findOne({ Email: data.email });
+            if (!user) {
+                throw new exception_1.NotFoundException();
+            }
+            if (user.UserStatus === enums_1.UserStatus.Inactive) {
+                throw new exception_1.CustomException("User is inactive", exception_1.ResponseCode.UNPROCESSABLE, exception_1.ResponseOrigin.INTERNALSERVER);
+            }
+            // let newPassword = "string";
+            let newPassword = randomstring_1.default.generate(8);
+            try {
+                const hash = yield bcrypt_1.default.hash(newPassword, this.SaltRound);
+                yield this._userRepository.findByIdAndUpdate(user.Id, { Password: hash, SystemGeneratedPassword: 1 });
+                if (user.Email) {
+                    // await EmailHelper.SendVerificationCodeMail(user.email, { Code: newPassword });
+                }
+                return "Email Sent! Please Check Your New Password";
+            }
+            catch (e) {
+                throw new exception_1.FatalErrorException();
+            }
+        });
+    }
+    UpdateUser(data, Id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                console.log(data);
+                let response = yield this._userRepository.findByIdAndUpdate(Id, data);
+                return "User Updated Successfully";
+            }
+            catch (e) {
+                console.log(e);
+                throw new exception_1.FatalErrorException();
+            }
+        });
+    }
+    me(data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return class_transformer_1.plainToClass(UserResponse_1.User, data);
         });
     }
 };

@@ -69,11 +69,6 @@ __decorate([
     class_validator_1.IsOptional(),
     __metadata("design:type", String)
 ], ResendVerifyCodeRequest.prototype, "email", void 0);
-__decorate([
-    class_validator_1.IsString(),
-    class_validator_1.IsOptional(),
-    __metadata("design:type", String)
-], ResendVerifyCodeRequest.prototype, "phoneNumber", void 0);
 exports.ResendVerifyCodeRequest = ResendVerifyCodeRequest;
 class ChangePasswordRequest {
 }
@@ -92,14 +87,12 @@ __decorate([
     class_validator_1.IsOptional(),
     class_validator_1.IsString(),
     __metadata("design:type", String)
-], UserUpdateRequest.prototype, "name", void 0);
+], UserUpdateRequest.prototype, "Name", void 0);
 __decorate([
     class_validator_1.IsOptional(),
-    class_transformer_1.Transform(value => parseInt(value)),
-    class_validator_1.IsInt(),
-    class_validator_1.Min(1),
+    class_validator_1.IsString(),
     __metadata("design:type", Number)
-], UserUpdateRequest.prototype, "age", void 0);
+], UserUpdateRequest.prototype, "ProfileImage", void 0);
 exports.UserUpdateRequest = UserUpdateRequest;
 class FindUserRequest {
 }

@@ -1,7 +1,7 @@
 import { Sequelize } from 'sequelize-typescript';
 import UserModel from '../features/user/userModel';
 
-const sequelize = new Sequelize('sequelize', 'root', '', {
+const sequelize = new Sequelize('basecode', 'root', '', {
         repositoryMode: true,
         host: 'localhost',
         dialect: 'mysql',

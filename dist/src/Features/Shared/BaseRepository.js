@@ -44,9 +44,24 @@ class BaseRepository {
             return yield this.Repository.destroy({ where: { Id: Id } });
         });
     }
-    find(whereParams, raw = true) {
+    find(whereParams = {}, paginationParams, raw = true) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.Repository.findAll({ where: whereParams, raw: raw });
+            if (!paginationParams) {
+                return yield this.Repository.findAll({ where: whereParams, raw: raw });
+            }
+            else {
+                return yield this.Repository.findAll({ where: whereParams, raw: raw, limit: paginationParams.limit, offset: paginationParams.page });
+            }
+        });
+    }
+    findOneAndUpdate(whereParams, data, raw = true) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.Repository.update(data, { where: whereParams }).get({ plain: true });
+        });
+    }
+    findById(Id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.Repository.findOne({ where: { Id: Id }, raw: true });
         });
     }
 }
