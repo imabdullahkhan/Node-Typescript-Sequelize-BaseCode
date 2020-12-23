@@ -1,0 +1,6 @@
+/.env
+/build/
+.vscode
+/node_modules/
+/public/attachments/*
+/docker/
