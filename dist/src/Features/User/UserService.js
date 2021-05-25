@@ -40,7 +40,7 @@ let UserService = class UserService {
     }
     _generatePinCode() {
         return __awaiter(this, void 0, void 0, function* () {
-            const pin = random_number_1.default({ integer: true, max: 9999, min: 1000, });
+            const pin = random_number_1.default({ integer: true, max: 9999, min: 1000 });
             return pin;
         });
     }
@@ -66,9 +66,11 @@ let UserService = class UserService {
                 }
                 if (data.limit !== -1) {
                     paginationParams.limit = data.limit;
-                    paginationParams.page = ((data.page || 1) * data.limit) - data.limit;
+                    paginationParams.page = (data.page || 1) * data.limit - data.limit;
                 }
-                let Users = yield this._userRepository.find({}, paginationParams);
+                let Users = yield this._userRepository.find({
+                    paginationParams
+                });
                 return yield class_transformer_1.plainToClass(UserResponse_1.User, Users);
             }
             catch (e) {
@@ -79,7 +81,9 @@ let UserService = class UserService {
     Register(data) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                let user = yield this._userRepository.findOne({ email: data.email });
+                let user = yield this._userRepository.findOne({
+                    whereParams: { email: data.email },
+                });
                 if (user && user.UserStatus !== enums_1.UserStatus.Unverified) {
                     throw new exception_1.CustomException(UserMessage_1.Messages.ExceptionAlreadyExists, exception_1.ResponseCode.CONFLICT, exception_1.ResponseOrigin.INTERNALSERVER);
                 }
@@ -87,13 +91,18 @@ let UserService = class UserService {
                     const updatedUser = yield this._userRepository.findByIdAndUpdate(user.Id, {
                         Pincode: yield this._generatePinCode(),
                         ExpiryPincode: yield this._getPinCodeExpiry(),
-                        UserStatus: enums_1.UserStatus.Unverified
+                        UserStatus: enums_1.UserStatus.Unverified,
                     });
                     return { Id: user.Id };
                 }
                 else {
                     const hash = yield bcrypt_1.default.hash(data.password, this.SaltRound);
-                    let userModel = { Email: data.email, Password: hash, ExpiryPincode: yield this._getPinCodeExpiry(), Pincode: yield this._generatePinCode() };
+                    let userModel = {
+                        Email: data.email,
+                        Password: hash,
+                        ExpiryPincode: yield this._getPinCodeExpiry(),
+                        Pincode: yield this._generatePinCode(),
+                    };
                     userModel.Email = data.email;
                     userModel.Password = hash;
                     userModel.ExpiryPincode = yield this._getPinCodeExpiry();
@@ -113,7 +122,7 @@ let UserService = class UserService {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 console.log("reched");
-                let user = yield this._userRepository.findOne({ email: data.email });
+                let user = yield this._userRepository.findOne({ whereParams: { email: data.email } });
                 if (!user) {
                     throw new exception_1.NotFoundException();
                 }
@@ -132,18 +141,18 @@ let UserService = class UserService {
     Verify(data) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                let user = yield this._userRepository.findOne({ email: data.email });
+                let user = yield this._userRepository.findOne({ whereParams: { email: data.email } });
                 if (!user) {
                     throw new exception_1.NotFoundException();
                 }
                 if (user.UserStatus !== enums_1.UserStatus.Unverified) {
                     throw new exception_1.CustomException(UserMessage_1.Messages.ExceptionAlreadyVerified, exception_1.ResponseCode.CONFLICT, exception_1.ResponseOrigin.INTERNALSERVER);
                 }
-                if ((new Date() < new Date(user.ExpiryPincode))) {
+                if (new Date() < new Date(user.ExpiryPincode)) {
                     const updatedUser = yield this._userRepository.findByIdAndUpdate(user.Id, {
                         Pincode: null,
                         ExpiryPincode: null,
-                        UserStatus: enums_1.UserStatus.Active
+                        UserStatus: enums_1.UserStatus.Active,
                     });
                     let Token = yield this._generateToken(updatedUser);
                     return { Token: Token, User: yield class_transformer_1.plainToClass(UserResponse_1.User, user) };
@@ -174,7 +183,7 @@ let UserService = class UserService {
     ResendVerifyCode(data) {
         return __awaiter(this, void 0, void 0, function* () {
             let user;
-            user = yield this._userRepository.findOne({ email: data.email });
+            user = yield this._userRepository.findOne({ whereParams: { email: data.email } });
             if (!user) {
                 throw new exception_1.NotFoundException();
             }
@@ -186,7 +195,7 @@ let UserService = class UserService {
                     const updatedUser = yield this._userRepository.findByIdAndUpdate(user.Id, {
                         Pincode: yield this._generatePinCode(),
                         ExpiryPincode: yield this._getPinCodeExpiry(),
-                        UserStatus: enums_1.UserStatus.Unverified
+                        UserStatus: enums_1.UserStatus.Unverified,
                     });
                     return { Id: user.Id };
                 }
@@ -198,7 +207,9 @@ let UserService = class UserService {
     }
     ForgotPassword(data) {
         return __awaiter(this, void 0, void 0, function* () {
-            let user = yield this._userRepository.findOne({ Email: data.email });
+            let user = yield this._userRepository.findOne({
+                whereParams: { Email: data.email },
+            });
             if (!user) {
                 throw new exception_1.NotFoundException();
             }
@@ -209,7 +220,10 @@ let UserService = class UserService {
             let newPassword = randomstring_1.default.generate(8);
             try {
                 const hash = yield bcrypt_1.default.hash(newPassword, this.SaltRound);
-                yield this._userRepository.findByIdAndUpdate(user.Id, { Password: hash, SystemGeneratedPassword: 1 });
+                yield this._userRepository.findByIdAndUpdate(user.Id, {
+                    Password: hash,
+                    SystemGeneratedPassword: 1,
+                });
                 if (user.Email) {
                     // await EmailHelper.SendVerificationCodeMail(user.email, { Code: newPassword });
                 }
